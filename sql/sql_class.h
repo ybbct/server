@@ -4907,7 +4907,7 @@ public:
     unit= u;
     return 0;
   }
-  virtual int prepare2(void) { return 0; }
+  virtual int prepare2(JOIN *join) { return 0; }
   /*
     Because of peculiarities of prepared statements protocol
     we need to know number of columns in the result set (if
@@ -5151,7 +5151,7 @@ class select_insert :public select_result_interceptor {
 		enum_duplicates duplic, bool ignore);
   ~select_insert();
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
-  virtual int prepare2(void);
+  virtual int prepare2(JOIN *join);
   virtual int send_data(List<Item> &items);
   virtual void store_values(List<Item> &values);
   virtual bool can_rollback_data() { return 0; }
@@ -5203,7 +5203,7 @@ public:
   // Needed for access from local class MY_HOOKS in prepare(), since thd is proteted.
   const THD *get_thd(void) { return thd; }
   const HA_CREATE_INFO *get_create_info() { return create_info; };
-  int prepare2(void) { return 0; }
+  int prepare2(JOIN *join) { return 0; }
 
 private:
   TABLE *create_table_from_items(THD *thd,
@@ -5887,6 +5887,7 @@ public:
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   int send_data(List<Item> &items);
   bool initialize_tables (JOIN *join);
+  int prepare2(JOIN *join);
   int  do_updates();
   bool send_eof();
   inline ha_rows num_found() const { return found; }
