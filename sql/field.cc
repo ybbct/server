@@ -7923,9 +7923,11 @@ void Field_varstring::hash(ulong *nr, ulong *nr2)
   Compress field
 
   @param[out]    to         destination buffer for compressed data
-  @param[in,out] to_length  in: size of to, out: compressed data length
+  @param[in]     to_length  size of to
   @param[in]     from       data to compress
   @param[in]     length     from length
+  @param[in]     max_length truncate `from' to this length
+  @param[out]    out_length compessed data length
   @param[in]     cs         from character set
 
   In worst case (no compression performed) storage requirement is increased by
@@ -7950,47 +7952,65 @@ void Field_varstring::hash(ulong *nr, ulong *nr2)
   followed by compressed data.
 */
 
-int Field_longstr::compress(char *to, uint *to_length,
+int Field_longstr::compress(char *to, uint to_length,
                             const char *from, uint length,
+                            uint max_length,
+                            uint *out_length,
                             CHARSET_INFO *cs)
 {
   THD *thd= get_thd();
-  char *buf= 0;
+  char *buf;
+  uint buf_length;
   int rc= 0;
 
   if (String::needs_conversion_on_storage(length, cs, field_charset) ||
-      *to_length <= length)
+      max_length < length)
   {
     String_copier copier;
-    const char *end= from + length;
 
-    if (!(buf= (char*) my_malloc(*to_length - 1, MYF(MY_WME))))
+    if (!(buf= (char*) my_malloc(max_length, MYF(MY_WME))))
     {
-      *to_length= 0;
+      *out_length= 0;
       return -1;
     }
 
-    length= copier.well_formed_copy(field_charset, buf, *to_length - 1,
-                                    cs, from, length,
-                                    (*to_length - 1) / field_charset->mbmaxlen);
-    rc= check_conversion_status(&copier, end, cs, true);
-    from= buf;
+    buf_length= copier.well_formed_copy(field_charset, buf, max_length,
+                                        cs, from, length,
+                                        max_length / field_charset->mbmaxlen);
+    rc= check_conversion_status(&copier, from + length, cs, true);
+  }
+  else
+  {
+    buf= const_cast<char*>(from);
+    buf_length= length;
   }
 
-  if (length == 0)
-    *to_length= 0;
-  else if (length >= thd->variables.column_compression_threshold &&
-      (*to_length= compression_method()->compress(thd, to, from, length)))
+  if (buf_length == 0)
+    *out_length= 0;
+  else if (buf_length >= thd->variables.column_compression_threshold &&
+      (*out_length= compression_method()->compress(thd, to, buf, buf_length)))
     status_var_increment(thd->status_var.column_compressions);
   else
   {
     /* Store uncompressed */
     to[0]= 0;
-    memcpy(to + 1, from, length);
-    *to_length= length + 1;
+    if (buf_length < to_length)
+      memcpy(to + 1, buf, buf_length);
+    else
+    {
+      /* Storing string at blob capacity, e.g. 255 bytes string to TINYBLOB. */
+      String_copier copier;
+
+      buf_length= copier.well_formed_copy(field_charset, to + 1, to_length - 1,
+                                          cs, from, length,
+                                          (to_length - 1) /
+                                          field_charset->mbmaxlen);
+      rc= check_conversion_status(&copier, from + length, cs, true);
+    }
+    *out_length= buf_length + 1;
   }
 
-  if (buf)
+  if (buf != from)
     my_free(buf);
   return rc;
 }
@@ -8044,9 +8064,10 @@ int Field_varstring_compressed::store(const char *from, size_t length,
                                       CHARSET_INFO *cs)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE_OR_COMPUTED;
-  uint to_length= (uint)MY_MIN(field_length, field_charset->mbmaxlen * length + 1);
-  int rc= compress((char*) get_data(), &to_length, from, (uint)length, cs);
-  store_length(to_length);
+  uint compressed_length;
+  int rc= compress((char*) get_data(), field_length, from, (uint) length,
+                   field_length - 1, &compressed_length, cs);
+  store_length(compressed_length);
   return rc;
 }
 
@@ -8654,7 +8675,10 @@ int Field_blob_compressed::store(const char *from, size_t length,
                                  CHARSET_INFO *cs)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE_OR_COMPUTED;
-  uint to_length= (uint)MY_MIN(max_data_length(), field_charset->mbmaxlen * length + 1);
+  uint compressed_length;
+  uint max_length= max_data_length();
+  uint to_length= (uint) MY_MIN(max_length,
+                                field_charset->mbmaxlen * length + 1);
   String tmp(from, length, cs);
   int rc;
 
@@ -8664,8 +8688,9 @@ int Field_blob_compressed::store(const char *from, size_t length,
   if (value.alloc(to_length))
     goto oom;
 
-  rc= compress((char*) value.ptr(), &to_length, tmp.ptr(), (uint) length, cs);
-  set_ptr(to_length, (uchar*) value.ptr());
+  rc= compress((char*) value.ptr(), to_length, tmp.ptr(), (uint) length,
+               max_length, &compressed_length, cs);
+  set_ptr(compressed_length, (uchar*) value.ptr());
   return rc;
 
 oom:

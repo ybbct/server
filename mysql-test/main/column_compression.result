@@ -1394,3 +1394,12 @@ SET column_compression_threshold=0;
 INSERT INTO t1 VALUES('a');
 SET column_compression_threshold=DEFAULT;
 DROP TABLE t1;
+#
+# MDEV-15592 - Column COMPRESSED should select a 'high order' datatype
+#
+CREATE TABLE t1(a TINYTEXT COMPRESSED);
+INSERT INTO t1 VALUES(REPEAT('a', 255));
+SELECT a, LENGTH(a) FROM t1;
+a	LENGTH(a)
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	255
+DROP TABLE t1;

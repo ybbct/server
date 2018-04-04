@@ -1763,8 +1763,10 @@ protected:
                                          const Item *item) const;
   bool cmp_to_string_with_stricter_collation(const Item_bool_func *cond,
                                              const Item *item) const;
-  int compress(char *to, uint *to_length,
+  int compress(char *to, uint to_length,
                const char *from, uint length,
+               uint max_length,
+               uint *out_length,
                CHARSET_INFO *cs);
   String *uncompress(String *val_buffer, String *val_ptr,
                      const uchar *from, uint from_length);
