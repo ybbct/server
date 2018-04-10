@@ -122,6 +122,9 @@ my_bool my_init(void)
 #ifdef __WIN__
     win32_init_tcp_ip();
 #endif
+#ifdef USE_MY_LIKELY
+    init_my_likely();
+#endif
     DBUG_RETURN(0);
   }
 } /* my_init */
@@ -166,6 +169,9 @@ void my_end(int infoflag)
       DBUG_PRINT("error", ("%s", ebuff));
       my_print_open_files();
     }
+#ifdef USE_MY_LIKELY
+    end_my_likely(0);
+#endif
   }
   free_charsets();
   my_error_unregister_all();

@@ -1280,4 +1280,17 @@ static inline double rint(double x)
 #define NOT_FIXED_DEC           FLOATING_POINT_DECIMALS
 #endif
 
+#ifdef USE_MY_LIKELY
+C_MODE_START
+extern void init_my_likely(), end_my_likely(FILE *);
+extern int my_likely_ok(const char *file_name, uint line);
+extern int my_likely_fail(const char *file_name, uint line);
+C_MODE_END
+
+#define my_likely(A) ((A) ? (my_likely_ok(__FILE__, __LINE__),1) : (my_likely_fail(__FILE__, __LINE__), 0))
+#define my_unlikely(A) ((A) ? (my_likely_fail(__FILE__, __LINE__),1) : (my_likely_ok(__FILE__, __LINE__), 0))
+#else
+#define my_likely(A) likely(A)
+#define my_unlikely(A) unlikely(A)
+#endif /* USE_MY_LIKELY */
 #endif /* my_global_h */
