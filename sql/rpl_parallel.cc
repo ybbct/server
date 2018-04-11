@@ -402,7 +402,7 @@ do_ftwrl_wait(rpl_group_info *rgi,
     {
       if (entry->force_abort || rgi->worker_error)
         break;
-      if (thd->check_killed())
+      if (unlikely(thd->check_killed()))
       {
         thd->send_kill_message();
         slave_output_error_info(rgi, thd);
@@ -453,7 +453,7 @@ pool_mark_busy(rpl_parallel_thread_pool *pool, THD *thd)
   }
   while (pool->busy)
   {
-    if (thd && thd->check_killed())
+    if (thd && unlikely(thd->check_killed()))
     {
       thd->send_kill_message();
       res= 1;
@@ -571,7 +571,7 @@ rpl_pause_for_ftwrl(THD *thd)
            e->last_committed_sub_id < e->pause_sub_id &&
            !err)
     {
-      if (thd->check_killed())
+      if (unlikely(thd->check_killed()))
       {
         thd->send_kill_message();
         err= 1;
@@ -838,7 +838,7 @@ do_retry:
   }
   DBUG_EXECUTE_IF("inject_mdev8031", {
       /* Simulate pending KILL caught in read_relay_log_description_event(). */
-      if (thd->check_killed()) {
+      if (unlikely(thd->check_killed())) {
         thd->send_kill_message();
         err= 1;
         goto err;
@@ -1288,7 +1288,7 @@ handle_rpl_parallel_thread(void *arg)
         if (!err)
 #endif
         {
-          if (thd->check_killed())
+          if (unlikely(thd->check_killed()))
           {
             thd->clear_error();
             thd->get_stmt_da()->reset_diagnostics_area();
@@ -2075,7 +2075,7 @@ rpl_parallel_entry::choose_thread(rpl_group_info *rgi, bool *did_enter_cond,
         /* The thread is ready to queue into. */
         break;
       }
-      else if (rli->sql_driver_thd->check_killed())
+      else if (unlikely(rli->sql_driver_thd->check_killed()))
       {
         unlock_or_exit_cond(rli->sql_driver_thd, &thr->LOCK_rpl_thread,
                             did_enter_cond, old_stage);
@@ -2401,7 +2401,7 @@ rpl_parallel::wait_for_workers_idle(THD *thd)
                     &stage_waiting_for_workers_idle, &old_stage);
     while (e->current_sub_id > e->last_committed_sub_id)
     {
-      if (thd->check_killed())
+      if (unlikely(thd->check_killed()))
       {
         thd->send_kill_message();
         err= 1;

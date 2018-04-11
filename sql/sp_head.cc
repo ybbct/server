@@ -1381,7 +1381,8 @@ sp_head::execute(THD *thd, bool merge_da_on_success)
     /* Reset sp_rcontext::end_partial_result_set flag. */
     ctx->end_partial_result_set= FALSE;
 
-  } while (!err_status && !thd->killed && !thd->is_fatal_error &&
+  } while (!err_status && likely(!thd->killed) &&
+           likely(!thd->is_fatal_error) &&
            !thd->spcont->pause_state);
 
 #if defined(ENABLED_PROFILING)

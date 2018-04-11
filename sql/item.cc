@@ -703,12 +703,11 @@ Item* Item::set_expr_cache(THD *thd)
 {
   DBUG_ENTER("Item::set_expr_cache");
   Item_cache_wrapper *wrapper;
-  if ((wrapper= new (thd->mem_root) Item_cache_wrapper(thd, this)) &&
-      !wrapper->fix_fields(thd, (Item**)&wrapper))
+  if (likely((wrapper= new (thd->mem_root) Item_cache_wrapper(thd, this))) &&
+      likely(!wrapper->fix_fields(thd, (Item**)&wrapper)))
   {
-    if (wrapper->set_cache(thd))
-      DBUG_RETURN(NULL);
-    DBUG_RETURN(wrapper);
+    if (likely(!wrapper->set_cache(thd)))
+      DBUG_RETURN(wrapper);
   }
   DBUG_RETURN(NULL);
 }
@@ -1307,7 +1306,7 @@ Item *Item_cache::safe_charset_converter(THD *thd, CHARSET_INFO *tocs)
     return this;
   Item_cache *cache;
   if (!conv || conv->fix_fields(thd, (Item **) NULL) ||
-      !(cache= new (thd->mem_root) Item_cache_str(thd, conv)))
+      unlikely(!(cache= new (thd->mem_root) Item_cache_str(thd, conv))))
     return NULL; // Safe conversion is not possible, or OEM
   cache->setup(thd, conv);
   cache->fixed= false; // Make Item::fix_fields() happy

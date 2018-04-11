@@ -1516,12 +1516,13 @@ uint read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
 		    uint rec_length)
 {
   register uint count;
-  uint length;
+  uint length= 0;
 
   if ((count=(uint) MY_MIN((ha_rows) buffpek->max_keys,buffpek->count)))
   {
-    if (my_b_pread(fromfile, (uchar*) buffpek->base,
-                   (length= rec_length*count), buffpek->file_pos))
+    length= rec_length*count;
+    if (unlikely(my_b_pread(fromfile, (uchar*) buffpek->base, length,
+                            buffpek->file_pos)))
       return ((uint) -1);
     buffpek->key=buffpek->base;
     buffpek->file_pos+= length;			/* New filepos */
@@ -1686,7 +1687,7 @@ int merge_buffers(Sort_param *param, IO_CACHE *from_file,
 
   while (queue.elements > 1)
   {
-    if (killable && thd->check_killed())
+    if (killable && unlikely(thd->check_killed()))
     {
       error= 1; goto err;                        /* purecov: inspected */
     }

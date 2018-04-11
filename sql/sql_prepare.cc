@@ -4197,8 +4197,9 @@ reexecute:
   }
 #endif /* WITH_WSREP */
 
-  if ((sql_command_flags[lex->sql_command] & CF_REEXECUTION_FRAGILE) &&
-      error && !thd->is_fatal_error && !thd->killed &&
+  if (unlikely(error) &&
+      (sql_command_flags[lex->sql_command] & CF_REEXECUTION_FRAGILE) &&
+      !thd->is_fatal_error && !thd->killed &&
       reprepare_observer.is_invalidated() &&
       reprepare_attempt++ < MAX_REPREPARE_ATTEMPTS)
   {
@@ -4392,8 +4393,9 @@ reexecute:
     }
 #endif /* WITH_WSREP */
 
-    if ((sql_command_flags[lex->sql_command] & CF_REEXECUTION_FRAGILE) &&
-        error && !thd->is_fatal_error && !thd->killed &&
+    if (unlikely(error) &&
+        (sql_command_flags[lex->sql_command] & CF_REEXECUTION_FRAGILE) &&
+        !thd->is_fatal_error && !thd->killed &&
         reprepare_observer.is_invalidated() &&
         reprepare_attempt++ < MAX_REPREPARE_ATTEMPTS)
     {

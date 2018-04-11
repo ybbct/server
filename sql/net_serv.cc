@@ -112,12 +112,12 @@ extern void query_cache_insert(void *thd, const char *packet, size_t length,
                                unsigned pkt_nr);
 #endif // HAVE_QUERY_CACHE
 #define update_statistics(A) A
-extern my_bool thd_net_is_killed();
+extern my_bool thd_net_is_killed(THD *thd);
 /* Additional instrumentation hooks for the server */
 #include "mysql_com_server.h"
 #else
 #define update_statistics(A)
-#define thd_net_is_killed() 0
+#define thd_net_is_killed(A) 0
 #endif
 
 
@@ -960,7 +960,7 @@ retry:
 	  DBUG_PRINT("info",("vio_read returned %ld  errno: %d",
 			     (long) length, vio_errno(net->vio)));
 
-          if (i== 0 && thd_net_is_killed())
+          if (i== 0 && unlikely(thd_net_is_killed((THD*) net->thd)))
           {
             DBUG_PRINT("info", ("thd is killed"));
             len= packet_error;

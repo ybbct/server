@@ -7799,8 +7799,9 @@ int fill_open_tables(THD *thd, TABLE_LIST *tables, COND *cond)
   TABLE *table= tables->table;
   CHARSET_INFO *cs= system_charset_info;
   OPEN_TABLE_LIST *open_list;
-  if (!(open_list=list_open_tables(thd,thd->lex->select_lex.db.str, wild))
-            && thd->is_fatal_error)
+  if (unlikely(!(open_list= list_open_tables(thd, thd->lex->select_lex.db.str,
+                                             wild))) &&
+      unlikely(thd->is_fatal_error))
     DBUG_RETURN(1);
 
   for (; open_list ; open_list=open_list->next)
@@ -7810,7 +7811,7 @@ int fill_open_tables(THD *thd, TABLE_LIST *tables, COND *cond)
     table->field[1]->store(open_list->table, strlen(open_list->table), cs);
     table->field[2]->store((longlong) open_list->in_use, TRUE);
     table->field[3]->store((longlong) open_list->locked, TRUE);
-    if (schema_table_store_record(thd, table))
+    if (unlikely(schema_table_store_record(thd, table)))
       DBUG_RETURN(1);
   }
   DBUG_RETURN(0);

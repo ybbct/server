@@ -4269,9 +4269,8 @@ void thd_increment_bytes_sent(void *thd, size_t length)
   }
 }
 
-my_bool thd_net_is_killed()
+my_bool thd_net_is_killed(THD *thd)
 {
-  THD *thd= current_thd;
   return thd && thd->killed ? 1 : 0;
 }
 
@@ -7522,7 +7521,7 @@ wait_for_commit::wait_for_prior_commit2(THD *thd)
   thd->ENTER_COND(&COND_wait_commit, &LOCK_wait_commit,
                   &stage_waiting_for_prior_transaction_to_commit,
                   &old_stage);
-  while ((loc_waitee= this->waitee) && !thd->check_killed())
+  while ((loc_waitee= this->waitee) && likely(!thd->check_killed()))
     mysql_cond_wait(&COND_wait_commit, &LOCK_wait_commit);
   if (!loc_waitee)
   {

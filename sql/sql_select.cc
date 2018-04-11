@@ -309,7 +309,7 @@ void dbug_serve_apcs(THD *thd, int n_calls)
     thd_proc_info(thd, "show_explain_trap");
     my_sleep(30000);
     thd_proc_info(thd, save_proc_info);
-    if (thd->check_killed())
+    if (unlikely(thd->check_killed()))
       break;
   }
 }
@@ -1879,8 +1879,9 @@ JOIN::optimize_inner()
   /* Calculate how to do the join */
   THD_STAGE_INFO(thd, stage_statistics);
   result->prepare_to_read_rows();
-  if (make_join_statistics(this, select_lex->leaf_tables, &keyuse) ||
-      thd->is_fatal_error)
+  if (unlikely(make_join_statistics(this, select_lex->leaf_tables,
+                                    &keyuse)) ||
+      unlikely(thd->is_fatal_error))
   {
     DBUG_PRINT("error",("Error: make_join_statistics() failed"));
     DBUG_RETURN(1);
@@ -1909,7 +1910,7 @@ int JOIN::optimize_stage2()
   if (subq_exit_fl)
     goto setup_subq_exit;
 
-  if (thd->check_killed())
+  if (unlikely(thd->check_killed()))
     DBUG_RETURN(1);
   
   /* Generate an execution plan from the found optimal join order. */
@@ -8592,7 +8593,7 @@ best_extension_by_limited_search(JOIN      *join,
                         dbug_serve_apcs(thd, 1);
                  );
 
-  if (thd->check_killed())  // Abort
+  if (unlikely(thd->check_killed()))  // Abort
     DBUG_RETURN(TRUE);
 
   DBUG_EXECUTE("opt", print_plan(join, idx, read_time, record_count, idx,
@@ -18466,7 +18467,7 @@ create_internal_tmp_table_from_heap(THD *thd, TABLE *table,
     DBUG_EXECUTE_IF("raise_error", write_err= HA_ERR_FOUND_DUPP_KEY ;);
     if (write_err)
       goto err;
-    if (thd->check_killed())
+    if (unlikely(thd->check_killed()))
     {
       thd->send_kill_message();
       goto err_killed;
@@ -19027,7 +19028,7 @@ sub_select_cache(JOIN *join, JOIN_TAB *join_tab, bool end_of_records)
       rc= sub_select(join, join_tab, end_of_records);
     DBUG_RETURN(rc);
   }
-  if (join->thd->check_killed())
+  if (unlikely(join->thd->check_killed()))
   {
     /* The user has aborted the execution of the query */
     join->thd->send_kill_message();
@@ -20688,7 +20689,7 @@ end_write(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
     }
   }
 end:
-  if (join->thd->check_killed())
+  if (unlikely(join->thd->check_killed()))
   {
     join->thd->send_kill_message();
     DBUG_RETURN(NESTED_LOOP_KILLED);             /* purecov: inspected */
@@ -20778,7 +20779,7 @@ end_update(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
   }
   join_tab->send_records++;
 end:
-  if (join->thd->check_killed())
+  if (unlikely(join->thd->check_killed()))
   {
     join->thd->send_kill_message();
     DBUG_RETURN(NESTED_LOOP_KILLED);             /* purecov: inspected */
@@ -22555,7 +22556,7 @@ static int remove_dup_with_compare(THD *thd, TABLE *table, Field **first_field,
   error= file->ha_rnd_next(record);
   for (;;)
   {
-    if (thd->check_killed())
+    if (unlikely(thd->check_killed()))
     {
       thd->send_kill_message();
       error=0;
@@ -22678,7 +22679,7 @@ static int remove_dup_with_hash_index(THD *thd, TABLE *table,
   for (;;)
   {
     uchar *org_key_pos;
-    if (thd->check_killed())
+    if (unlikely(thd->check_killed()))
     {
       thd->send_kill_message();
       error=0;

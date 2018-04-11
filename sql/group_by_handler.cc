@@ -63,7 +63,7 @@ int Pushdown_query::execute(JOIN *join)
 
   while (!(err= handler->next_row()))
   {
-    if (thd->check_killed())
+    if (unlikely(thd->check_killed()))
     {
       thd->send_kill_message();
       handler->end_scan();

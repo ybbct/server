@@ -4304,7 +4304,7 @@ bool cmp_item_row::prepare_comparators(THD *thd, Item **args, uint arg_count)
 bool Item_func_in::fix_for_row_comparison_using_bisection(THD *thd)
 {
   uint cols= args[0]->cols();
-  if (!(array= new (thd->mem_root) in_row(thd, arg_count-1, 0)))
+  if (unlikely(!(array= new (thd->mem_root) in_row(thd, arg_count-1, 0))))
     return true;
   cmp_item_row *cmp= &((in_row*)array)->tmp;
   if (cmp->alloc_comparators(thd, cols) ||
