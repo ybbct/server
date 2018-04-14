@@ -905,12 +905,10 @@ public:
 
   friend class subselect_hash_sj_engine;
   friend class Item_in_subselect;
-  friend bool
-  exec_engine_for_degenerated_jtbm_semi_join(THD *thd,
-                                             JOIN *join,
-                                             select_value_catcher **new_sink,
-                                             Item_in_subselect *subq_pred);
-
+  friend bool execute_degenerate_jtbm_semi_join(THD *thd,
+                                                TABLE_LIST *tbl,
+                                                Item_in_subselect *subq_pred,
+                                                List<Item> &eq_list);
 };
 
 

@@ -1730,9 +1730,26 @@ JOIN::optimize_inner()
       thd->restore_active_arena(arena, &backup);
   }
   
-  if (setup_degenerated_semi_joins_before_optimize_cond(this, join_list,
-                                                        &conds, &cond_value))
+  List<Item> eq_list;
+
+  if (setup_degenerate_jtbm_semi_joins(this, join_list, eq_list))
     DBUG_RETURN(1);
+
+  if (eq_list.elements != 0)
+  {
+    Item *new_cond;
+
+    if (eq_list.elements == 1)
+      new_cond= eq_list.pop();
+    else
+      new_cond= new (thd->mem_root) Item_cond_and(thd, eq_list);
+
+    if (new_cond &&
+        (new_cond->fix_fields(thd, &new_cond) ||
+        !(conds= and_items(thd, conds, new_cond)) ||
+        conds->fix_fields(thd, &conds)))
+      DBUG_RETURN(TRUE);
+  }
 
   if (select_lex->cond_pushed_into_where)
   {
@@ -1768,8 +1785,15 @@ JOIN::optimize_inner()
       }
   }
 
-  if (setup_jtbm_semi_joins(this, join_list, &conds, &cond_value))
+  if (setup_jtbm_semi_joins(this, join_list, eq_list))
     DBUG_RETURN(1);
+
+  if (eq_list.elements != 0)
+  {
+    if (join_equalities_after_optimize_cond(this, eq_list))
+      DBUG_RETURN(TRUE);
+    conds= conds->remove_eq_conds(thd, &cond_value, true);
+  }
 
   if (thd->lex->sql_command == SQLCOM_SELECT &&
       optimizer_flag(thd, OPTIMIZER_SWITCH_COND_PUSHDOWN_FOR_DERIVED))
