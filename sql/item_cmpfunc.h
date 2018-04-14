@@ -3129,8 +3129,7 @@ public:
   {
     return used_tables() & tab_map;
   }
-  bool excl_dep_on_left_in_subq_part(st_select_lex *sel);
-  Item_equal *try_to_merge_equal_items(THD *thd, Item_equal *what);
+  bool excl_dep_on_in_subq_left_part(Item_in_subselect *subq_pred);
 
   friend class Item_equal_fields_iterator;
   bool count_sargable_conds(void *arg);

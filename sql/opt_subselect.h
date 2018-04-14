@@ -29,12 +29,14 @@ bool optimize_semijoin_nests(JOIN *join, table_map all_table_map);
 bool setup_degenerated_jtbm_semi_join(THD *thd, JOIN *join,
 				     TABLE_LIST *table,
 				     Item **join_where,
-				     Item_in_subselect *subq_pred);
+				     Item_in_subselect *subq_pred,
+				     Item::cond_result *cond_value);
 bool setup_jtbm_semi_joins(JOIN *join, List<TABLE_LIST> *join_list,
                            Item **join_where, Item::cond_result *cond_value);
 bool setup_degenerated_semi_joins_before_optimize_cond(JOIN *join,
-						   List<TABLE_LIST> *join_list,
-						      Item **join_where);
+						List<TABLE_LIST> *join_list,
+						Item **join_where,
+						Item::cond_result *cond_value);
 void cleanup_empty_jtbm_semi_joins(JOIN *join, List<TABLE_LIST> *join_list);
 
 // used by Loose_scan_opt

@@ -330,9 +330,9 @@ public:
     return Item_args::excl_dep_on_grouping_fields(sel);
   }
 
-  bool excl_dep_on_left_in_subq_part(st_select_lex *sel)
+  bool excl_dep_on_in_subq_left_part(Item_in_subselect *subq_pred)
   {
-    return Item_args::excl_dep_on_left_in_subq_part(sel);
+    return Item_args::excl_dep_on_in_subq_left_part(subq_pred);
   }
 
   /*

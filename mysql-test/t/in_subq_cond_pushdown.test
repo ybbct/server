@@ -25,9 +25,9 @@ create view v1 as
 
 --echo # conjunctive subformula : pushing into HAVING
 let $query=
-  select * from t1
-  where c<25 and
-    (a,c) in (select e,max(g) from t2 where e<5 group by e);
+select * from t1
+where c<25 and
+  (a,c) in (select e,max(g) from t2 where e<5 group by e);
 
 eval $no_pushdown $query;
 eval $query;
@@ -36,15 +36,15 @@ eval explain format=json $query;
 
 --echo # extracted and formula : pushing into HAVING
 let $query=
-  select * from t1
-  where c>55 and b<4 and
-    (a,b,c) in
-    (
-      select e,f,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1
+where c>55 and b<4 and
+  (a,b,c) in
+  (
+    select e,f,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -54,15 +54,15 @@ eval explain format=json $query;
 
 --echo # extracted or formula : pushing into HAVING
 let $query=
-  select * from t1
-  where (c>60 or c<25) and
-    (a,b,c) in
-    (
-      select e,f,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1
+where (c>60 or c<25) and
+  (a,b,c) in
+  (
+    select e,f,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -72,15 +72,15 @@ eval explain format=json $query;
 
 --echo # extracted and-or formula : pushing into HAVING
 let $query=
-  select * from t1
-  where ((c>60 or c<25) and b>2) and
-    (a,b,c) in
-    (
-      select e,f,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1
+where ((c>60 or c<25) and b>2) and
+  (a,b,c) in
+  (
+    select e,f,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -90,15 +90,15 @@ eval explain format=json $query;
 
 --echo # conjunctive subformula : pushing into HAVING
 let $query=
-  select * from t1
-  where ((a<2 or d>2) and b>3) and
-    (a,b,c) in
-    (
-      select e,f,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1
+where ((a<2 or d>2) and b>3) and
+  (a,b,c) in
+  (
+    select e,f,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -108,15 +108,15 @@ eval explain format=json $query;
 
 --echo # using view in subquery definition : pushing into HAVING
 let $query=
-  select * from t1
-  where c>20 and
-    (a,c) in
-    (
-      select x,max(y)
-      from v1
-      where x>1
-      group by x
-    )
+select * from t1
+where c>20 and
+  (a,c) in
+  (
+    select x,max(y)
+    from v1
+    where x>1
+    group by x
+  )
 ;
 
 eval $no_pushdown $query;
@@ -126,15 +126,15 @@ eval explain format=json $query;
 
 --echo # using equality : pushing into WHERE
 let $query=
-  select * from t1,v1
-  where c>20 and c=y and
-    (a,c) in
-    (
-      select e,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1,v1
+where c>20 and c=y and
+  (a,c) in
+  (
+    select e,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -144,15 +144,15 @@ eval explain format=json $query;
 
 --echo # conjunctive subformula : pushing into WHERE
 let $query=
-  select * from t1
-  where a<2 and
-    (a,c) in
-    (
-      select e,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1
+where a<2 and
+  (a,c) in
+  (
+    select e,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -162,15 +162,15 @@ eval explain format=json $query;
 
 --echo # extracted and formula : pushing into WHERE
 let $query=
-  select * from t1
-  where a>2 and a<5 and
-    (a,c) in
-    (
-      select e,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1
+where a>2 and a<5 and
+  (a,c) in
+  (
+    select e,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -180,15 +180,15 @@ eval explain format=json $query;
 
 --echo # extracted or formula : pushing into WHERE
 let $query=
-  select * from t1
-  where (a<2 or a>=4) and
-    (a,c) in
-    (
-      select e,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1
+where (a<2 or a>=4) and
+  (a,c) in
+  (
+    select e,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -198,15 +198,15 @@ eval explain format=json $query;
 
 --echo # extracted and-or formula : pushing into WHERE
 let $query=
-  select * from t1
-  where ((a<2 or a=5) and b>3) and
-    (a,b,c) in
-    (
-      select e,f,max(g)
-      from t2
-      where e<5
-      group by e,f
-    )
+select * from t1
+where ((a<2 or a=5) and b>3) and
+  (a,b,c) in
+  (
+    select e,f,max(g)
+    from t2
+    where e<5
+    group by e,f
+  )
 ;
 
 eval $no_pushdown $query;
@@ -216,15 +216,15 @@ eval explain format=json $query;
 
 --echo # extracted and-or formula : pushing into WHERE
 let $query=
-  select * from t1
-  where ((a<2 or a=5) and b>3) and
-    (a,b,c) in
-    (
-      select e,f,max(g)
-      from t2
-      where e<5
-      group by e,f
-    )
+select * from t1
+where ((a<2 or a=5) and b>3) and
+  (a,b,c) in
+  (
+    select e,f,max(g)
+    from t2
+    where e<5
+    group by e,f
+  )
 ;
 
 eval $no_pushdown $query;
@@ -234,15 +234,15 @@ eval explain format=json $query;
 
 --echo # conjunctive subformula : pushing into WHERE
 let $query=
-  select * from t1
-  where ((b<3 or d>2) and a<2) and
-    (a,b,c) in
-    (
-      select e,f,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1
+where ((b<3 or d>2) and a<2) and
+  (a,b,c) in
+  (
+    select e,f,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -252,15 +252,15 @@ eval explain format=json $query;
 
 --echo # using equalities : pushing into WHERE
 let $query=
-  select * from t1
-  where d=1 and a=d and
-    (a,c) in
-    (
-      select e,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1
+where d=1 and a=d and
+  (a,c) in
+  (
+    select e,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -270,15 +270,15 @@ eval explain format=json $query;
 
 --echo # using equality : pushing into WHERE
 let $query=
-  select * from t1
-  where d>1 and a=d and
-    (a,c) in
-    (
-      select e,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1
+where d>1 and a=d and
+  (a,c) in
+  (
+    select e,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -288,15 +288,15 @@ eval explain format=json $query;
 
 --echo # using view in subquery definition : pushing into WHERE
 let $query=
-  select * from t1
-  where a<3 and
-    (a,c) in
-    (
-      select x,max(y)
-      from v1
-      where x>1
-      group by x
-    )
+select * from t1
+where a<3 and
+  (a,c) in
+  (
+    select x,max(y)
+    from v1
+    where x>1
+    group by x
+  )
 ;
 
 eval $no_pushdown $query;
@@ -306,15 +306,15 @@ eval explain format=json $query;
 
 --echo # using equality : pushing into WHERE
 let $query=
-  select * from t1,v1
-  where t1.a=v1.x and v1.x<2 and v1.y>30 and
-    (t1.a,t1.c) in
-    (
-      select e,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1,v1
+where t1.a=v1.x and v1.x<2 and v1.y>30 and
+  (t1.a,t1.c) in
+  (
+    select e,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;
@@ -325,15 +325,15 @@ eval explain format=json $query;
 --echo # conjunctive subformula : pushing into WHERE
 --echo # extracted or formula : pushing into HAVING
 let $query=
-  select * from t1
-  where ((b<3 or b=4) and a<3) and
-    (a,b,c) in
-    (
-      select e,f,max(g)
-      from t2
-      where e<5
-      group by e
-    )
+select * from t1
+where ((b<3 or b=4) and a<3) and
+  (a,b,c) in
+  (
+    select e,f,max(g)
+    from t2
+    where e<5
+    group by e
+  )
 ;
 
 eval $no_pushdown $query;

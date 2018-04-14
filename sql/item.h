@@ -563,6 +563,7 @@ public:
   String_copier_for_item(THD *thd): m_thd(thd) { }
 };
 
+
 class Item: public Value_source,
             public Type_all_attributes
 {
@@ -1603,8 +1604,15 @@ public:
     or can be converted to such an exression using equalities.
     Not to be used for AND/OR formulas.
   */
-  virtual bool excl_dep_on_grouping_fields(st_select_lex *sel) { return false; }
-  virtual bool excl_dep_on_left_in_subq_part(st_select_lex *sel) { return false; }
+  virtual bool excl_dep_on_grouping_fields(st_select_lex *sel)
+  { return false; }
+  /*
+    TRUE if the expression depends only on fields from the left part of
+    IN subquery or can be converted to such an expression using equalities.
+    Not to be used for AND/OR formulas.
+  */
+  virtual bool excl_dep_on_in_subq_left_part(Item_in_subselect *subq_pred)
+  { return false; }
 
   virtual bool switch_to_nullable_fields_processor(void *arg) { return 0; }
   virtual bool find_function_processor (void *arg) { return 0; }
@@ -1780,7 +1788,7 @@ public:
   virtual Item *derived_grouping_field_transformer_for_where(THD *thd,
                                                              uchar *arg)
   { return this; }
-  virtual Item *insubq_field_transformer_for_having(THD *thd, uchar *arg)
+  virtual Item *in_subq_field_transformer_for_having(THD *thd, uchar *arg)
   { return this; }
   virtual Item *in_predicate_to_in_subs_transformer(THD *thd, uchar *arg)
   { return this; }
@@ -1963,6 +1971,10 @@ public:
   {
     marker &= ~EXTRACTION_MASK;
   }
+  bool find_field(Item_in_subselect *subq_pred);
+  Item *build_pushable_cond(THD *thd, table_map tab_map,
+                            Item_in_subselect *subq_pred);
+  void check_pushable_cond(table_map tab_map, Item_in_subselect *subq_pred);
 };
 
 MEM_ROOT *get_thd_memroot(THD *thd);
@@ -2091,13 +2103,13 @@ protected:
     }
     return true;
   }
-  bool excl_dep_on_left_in_subq_part(st_select_lex *sel)
+  bool excl_dep_on_in_subq_left_part(Item_in_subselect *subq_pred)
   {
     for (uint i= 0; i < arg_count; i++)
     {
       if (args[i]->const_item())
         continue;
-      if (!args[i]->excl_dep_on_left_in_subq_part(sel))
+      if (!args[i]->excl_dep_on_in_subq_left_part(subq_pred))
         return false;
     }
     return true;
@@ -2948,11 +2960,11 @@ public:
   Item *derived_field_transformer_for_having(THD *thd, uchar *arg);
   Item *derived_field_transformer_for_where(THD *thd, uchar *arg);
   Item *derived_grouping_field_transformer_for_where(THD *thd, uchar *arg);
-  Item *insubq_field_transformer_for_having(THD *thd, uchar *arg);
+  Item *in_subq_field_transformer_for_having(THD *thd, uchar *arg);
   virtual void print(String *str, enum_query_type query_type);
   bool excl_dep_on_table(table_map tab_map);
   bool excl_dep_on_grouping_fields(st_select_lex *sel);
-  bool excl_dep_on_left_in_subq_part(st_select_lex *sel);
+  bool excl_dep_on_in_subq_left_part(Item_in_subselect *subq_pred);
   bool cleanup_excluding_fields_processor(void *arg)
   { return field ? 0 : cleanup_processor(arg); }
   bool cleanup_excluding_const_fields_processor(void *arg)
@@ -4760,8 +4772,8 @@ public:
   }
   bool excl_dep_on_grouping_fields(st_select_lex *sel)
   { return (*ref)->excl_dep_on_grouping_fields(sel); }
-  bool excl_dep_on_left_in_subq_part(st_select_lex *sel)
-  { return (*ref)->excl_dep_on_left_in_subq_part(sel); }
+  bool excl_dep_on_in_subq_left_part(Item_in_subselect *subq_pred)
+  { return (*ref)->excl_dep_on_in_subq_left_part(subq_pred); }
   bool cleanup_excluding_fields_processor(void *arg)
   {
     Item *item= real_item();
@@ -5076,7 +5088,7 @@ public:
   }
   bool excl_dep_on_table(table_map tab_map);
   bool excl_dep_on_grouping_fields(st_select_lex *sel);
-  bool excl_dep_on_left_in_subq_part(st_select_lex *sel);
+  bool excl_dep_on_in_subq_left_part(Item_in_subselect *subq_pred);
   Item *derived_field_transformer_for_having(THD *thd, uchar *arg);
   Item *derived_field_transformer_for_where(THD *thd, uchar *arg);
   Item *derived_grouping_field_transformer_for_where(THD *thd,

@@ -1274,8 +1274,8 @@ bool pushdown_cond_for_derived(THD *thd, Item *cond, TABLE_LIST *derived)
     This condition has to be fixed yet.
   */
   Item *extracted_cond;
-  derived->check_pushable_cond_for_table(cond);
-  extracted_cond= derived->build_pushable_cond_for_table(thd, cond);
+  cond->check_pushable_cond(derived->table->map, 0);
+  extracted_cond= cond->build_pushable_cond(thd, derived->table->map, 0);
   if (!extracted_cond)
   {
     /* Nothing can be pushed into the derived table */

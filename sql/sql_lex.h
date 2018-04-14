@@ -841,23 +841,6 @@ public:
 
 
 /*
-  The structure that consists of the field from the fields list
-  of the left part of in subquery and the field from the
-  projection list of the select from the right part of in subquery.
-  This fields stays on the same places (have the same indexes) in
-  their lists.
-*/
-class Insubq_field :public Sql_alloc
-{
-public:
-  Item *left_it;
-  Item *right_it;
-  Insubq_field(Item *l, Item *r)
-     :left_it(l), right_it(r) {}
-};
-
-
-/*
   SELECT_LEX - store information of parsed SELECT statment
 */
 class st_select_lex: public st_select_lex_node
@@ -1064,7 +1047,6 @@ public:
   
   table_map with_dep;
   List<Grouping_tmp_field> grouping_tmp_fields;
-  List<Insubq_field> insubq_fields;
 
   /* it is for correct printing SELECT options */
   thr_lock_type lock_type;

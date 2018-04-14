@@ -1730,7 +1730,8 @@ JOIN::optimize_inner()
       thd->restore_active_arena(arena, &backup);
   }
   
-  if (setup_degenerated_semi_joins_before_optimize_cond(this, join_list, &conds))
+  if (setup_degenerated_semi_joins_before_optimize_cond(this, join_list,
+                                                        &conds, &cond_value))
     DBUG_RETURN(1);
 
   if (select_lex->cond_pushed_into_where)
