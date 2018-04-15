@@ -5527,36 +5527,30 @@ Item *search_for_missing_parts_of_equalities(THD *thd,
 
 /**
   @brief
-    Attach new equalities to the WHERE-clause condition
+    Attach the equalities to the WHERE-clause condition
 
-  @param join     join of the select where equalities should be
-                  attached
+  @param join     join where equalities should be attached
   @param eq_list  the set of the equalities to add
 
   @details
     The method modifies the condition of the join (the condition of the
-    WHERE clause) by adding new equalities from the eq_list. It adds new
+    WHERE clause) by adding new equalities from eq_list. It adds new
     equalities to the remain multiple equalities of the WHERE clause condition
-    or if it is not possible just attaches them to the WHERE clause condition.
+    and attaches them to the WHERE clause condition.
 
-    First multiple equalities are disjoined from the join condition to avoid
-    repetitions. These multiple equalities are merged with the equalities from
-    the eq_list.
+    First all multiple equalities are disjoined from the WHERE clause condition
+    to avoid repetitions.
+    Multiple equalities for the on expression of join are merged with the
+    equalities from eq_list. For example, MULT_EQ(t1.a, t1.b) and (t1.a = 2)
+    will become MULT_EQ(2, t1.a, t1.b)
+    Sometimes merge is not possible and in this case the equalities that can't
+    be merged are saved to be attached to the condition later. This situation
+    can appear after the optimize of the IN subquery predicate if it is
+    transformed in the knowingly false equality. For example, (3 = 1) equality.
 
-    Example:
-
-    MULT_EQ(t1.a, t1.b) and (t1.a = 2) will become
-    MULT_EQ(2, t1.a, t1.b)
-
-    Sometimes it is not possible and in this case the eqialities that can't
-    be merged are saved to be attached to the condition later.
-    This situation can appear after the optimize of the IN subquery
-    predicate it is transformed in the knowlingly false equality.
-    For example, (3 = 1) equality.
-
-    Than a new condition is created. It consists of the old condition from
-    which multiple equalities were disjoint, new multiple equalities and
-    the equalities that weren't attached to the multiple equalities.
+    Finally, a new condition is created. It consists of the old condition from
+    which multiple equalities were disjoint, new multiple equalities and the
+    equalities from eq_list that weren't merged with the multiple equalities.
 
   @retval TRUE   if an error occurs
   @retval FALSE  otherwise
@@ -5672,15 +5666,15 @@ bool join_equalities_after_optimize_cond(JOIN *join,
   ((Item_cond_and *)conds)->m_cond_equal.copy(cond_equal);
   cond_equal.current_level=
     ((Item_cond_and *)conds)->m_cond_equal.current_level;
-  if (mult_eq_cnt == 1)
-  {
-    it.rewind();
-    conds= it++;
-  }
-  else
+  if (and_args)
   {
     and_args->append((List<Item> *)&cond_equal.current_level);
     conds= search_for_missing_parts_of_equalities(thd, 0, conds, &cond_equal);
+  }
+  else if (mult_eq_cnt == 1)
+  {
+    it.rewind();
+    conds= it++;
   }
 
   join->conds= conds;
@@ -5792,21 +5786,25 @@ bool execute_degenerate_jtbm_semi_join(THD *thd,
 
 
 /**
-  @brief  Find degenerate jtbm semi joins
+  @brief
+    Execute degenerate jtbm semi joins before optimize_cond() for parent
 
   @param join       the parent join for jtbm semi joins
-  @param join_list  the list of TABLE_LIST objects where jtbm semi join can occur
-  @param eq_list    IN/OUT the list where to add produced equalities
+  @param join_list  the list of tables where jtbm semi joins are processed
+  @param eq_list    IN/OUT the list where to add equalities produced after
+                    materialization of single-row degenerate jtbm semi joins
 
   @details
     The method traverses join_list trying to find any degenerate jtbm semi
     joins for subqueries of IN predicates. For each degenerate jtbm
-    semi join execute_degenerate_jtbm_semi_join is called.
+    semi join execute_degenerate_jtbm_semi_join() is called. As a result
+    of this call new equalities that substitute for single-row materialized
+    jtbm semi join are added to eq_list.
 
-    In the case when a TABLE_LIST object is nested in another TABLE_LIST
-    'nested_join' method is recursively called for the list
-    of TABLE_LIST objects of the 'nested_join' trying to find in the list
-    any degenerate jtbm semi joins.
+    In the case when a table is nested in another table 'nested_join' the
+    method is recursively called for the join_list of the 'nested_join' trying
+    to find in the list any degenerate jtbm semi joins. Currently a jtbm semi
+    join may occur in a mergeable semi join nest.
 
   @retval TRUE   if an error occurs
   @retval FALSE  otherwise
@@ -5854,48 +5852,39 @@ setup_degenerate_jtbm_semi_joins(JOIN *join,
 
 
 /**
-  @brief  Prepare jtbm semi joins for materialization
+  @brief
+    Optimize jtbm semi joins for materialization
 
   @param join       the parent join for jtbm semi joins
-  @param join_list  the list of TABLE_LIST objects where jtbm semi join can occur
+  @param join_list  the list of TABLE_LIST objects where jtbm semi join
+                    can occur
   @param eq_list    IN/OUT the list where to add produced equalities
 
   @details
+    This method is called by the optimizer after the call of
+    optimize_cond() for parent select.
     The method traverses join_list trying to find any jtbm semi joins for
-    subqueries from IN predicates. It either materializes the jtbm semi join
-    or creates a temporary table into which the jtbm semi join will be
-    materialized. The IN subquery predicate is optimized first to get the
-    information about how it should be handled.
+    subqueries from IN predicates and optimizes them.
+    After the optimization some of jtbm semi joins may become degenerate.
+    For example the subquery SELECT MAX(b) FROM t2 from the query
+    SELECT * FROM t1 WHERE 4 IN (SELECT MAX(b) FROM t2);
+    will become degenerate if there is an index on t2.b.
+    If a subquery becomes degenerate it is handled by the function
+    execute_degenerate_jtbm_semi_join().
 
-    The first case is when the jtbm semi join is degenerate. Usually the
-    jtbm semi join is found degenerate before the optimization and on this
-    step it is already materialized by the setup_degenerate_jtbm_semi_joins
-    method. Btw there can appear a situation when the jtbm semi join becomes
-    degenerate only after the optimization of the IN subquery predicate.
-    In this case the execute_degenerate_jtbm_semi_join method is called.
+    Otherwise the method creates a temporary table in which the subquery
+    of the jtbm semi join will be materialied.
 
-    Example taken from subselect.test:
-
-    SELECT * FROM t1
-    WHERE 4 IN (
-      SELECT MAX(b)
-      FROM t2
-      WHERE EXISTS (SELECT * FROM t1));
-
-    Only after the optimization of EXISTS it is found that the WHERE-clause
-    of the IN subquery predicate is impossible. So the jtbm semi join for
-    the subquery from this predicate is degenerate and should be materialized.
-
-    In the other case the IN subquery predicate should be computed via a
-    hash semi-join. It creates a temporary table in which the jtbm semi join
-    of the subquery from this predicate will be materialized.
-    The equalities between all pairs of expressions of the IN subquery
-    predicate are attached to the eq_list to be later conjuncted with the
+    The function saves the equalities between all pairs of the expressions
+    from the left part of the IN subquery predicate and the corresponding
+    columns of the subquery from the predicate in eq_list appending them
+    to the list. The equalities of eq_list will be later conjucted with the
     condition of the WHERE clause.
 
-    In the case when a TABLE_LIST object is nested in another TABLE_LIST
-    the method is recursively called for the list of TABLE_LIST objects
-    of the nested join.
+    In the case when a table is nested in another table 'nested_join' the
+    method is recursively called for the join_list of the 'nested_join' trying
+    to find in the list any degenerate jtbm semi joins. Currently a jtbm semi
+    join may occur in a mergeable semi join nest.
 
   @retval TRUE   if an error occurs
   @retval FALSE  otherwise
