@@ -1222,17 +1222,19 @@ cannot_create_many_fulltext_index:
 				innobase_get_err_msg(
 				ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_FTS);
 		}
-	} else if ((ha_alter_info->handler_flags
-		    & ALTER_ADD_NON_UNIQUE_NON_PRIM_INDEX)) {
-		/* ADD FULLTEXT|SPATIAL INDEX requires a lock.
+	}
 
-		We could do ADD FULLTEXT INDEX without a lock if the
-		table already contains an FTS_DOC_ID column, but in
-		that case we would have to apply the modification log
-		to the full-text indexes.
+	if ((ha_alter_info->handler_flags
+	    & ALTER_ADD_NON_UNIQUE_NON_PRIM_INDEX)) {
+	/* ADD FULLTEXT|SPATIAL INDEX requires a lock.
 
-		We could also do ADD SPATIAL INDEX by implementing
-		row_log_apply() for it. */
+	   We could do ADD FULLTEXT INDEX without a lock if the
+	   table already contains an FTS_DOC_ID column, but in
+	   that case we would have to apply the modification log
+	   to the full-text indexes.
+
+	   We could also do ADD SPATIAL INDEX by implementing
+	   row_log_apply() for it. */
 		bool add_fulltext = false;
 
 		for (uint i = 0; i < ha_alter_info->index_add_count; i++) {
@@ -1248,14 +1250,16 @@ cannot_create_many_fulltext_index:
 				if (add_fulltext) {
 					goto cannot_create_many_fulltext_index;
 				}
+
 				add_fulltext = true;
 				ha_alter_info->unsupported_reason = innobase_get_err_msg(
-					ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_FTS);
+						ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_FTS);
 				online = false;
 			}
+
 			if (online && (key->flags & HA_SPATIAL)) {
 				ha_alter_info->unsupported_reason = innobase_get_err_msg(
-					ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_GIS);
+						ER_ALTER_OPERATION_NOT_SUPPORTED_REASON_GIS);
 				online = false;
 			}
 		}
