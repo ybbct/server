@@ -24,6 +24,7 @@
 #include <hash.h>
 #include <m_ctype.h>
 
+#ifndef CHECK_UNLIKEY
 my_bool likely_inited= 0;
 
 typedef struct st_likely_entry
@@ -55,33 +56,60 @@ void init_my_likely()
   pthread_mutex_init(&likely_mutex, MY_MUTEX_INIT_FAST);
 }
 
+static int likely_cmp(LIKELY_ENTRY **a, LIKELY_ENTRY **b)
+{
+  int cmp;
+  if ((cmp= strcmp((*a)->key, (*b)->key)))
+    return cmp;
+  return (int) ((*a)->line - (*b)->line);
+}
+
 
 void end_my_likely(FILE *out)
 {
-  LIKELY_ENTRY *entry;
   uint i;
   FILE *likely_file;
   my_bool do_close= 0;
+  LIKELY_ENTRY **sort_ptr= 0;
 
   likely_inited= 0;
 
   if (!(likely_file= out))
   {
-    if ((likely_file= my_fopen("/tmp/likely.out", O_TRUNC | O_WRONLY,
-                                MYF(MY_WME))))
+    char name[80];
+    sprintf(name, "/tmp/unlikely-%lu.out", (ulong) getpid());
+    if ((likely_file= my_fopen(name, O_TRUNC | O_WRONLY, MYF(MY_WME))))
       do_close= 1;
     else
       likely_file= stderr;
   }
-
-  for (i=0 ; (entry= (LIKELY_ENTRY *) my_hash_element(&likely_hash, i)) ; i++)
+  fflush(likely_file);
+  fputs("Wrong likely/unlikely usage:\n", likely_file);
+  if (!(sort_ptr= (LIKELY_ENTRY**)
+        malloc(sizeof(LIKELY_ENTRY*) *likely_hash.records)))
   {
-    if (entry->fail > entry->ok)
-      fprintf(likely_file,
-              "%40.40s  line: %6u  ok: %8lld  fail: %8lld\n",
-              entry->key, entry->line, entry->ok, entry->fail);
+    fprintf(stderr, "ERROR: Out of memory in end_my_likely\n");
+    goto err;
   }
 
+  for (i=0 ; i < likely_hash.records ; i++)
+    sort_ptr[i]= (LIKELY_ENTRY *) my_hash_element(&likely_hash, i);
+
+  my_qsort(sort_ptr, likely_hash.records, sizeof(LIKELY_ENTRY*),
+           (qsort_cmp) likely_cmp);
+  
+  for (i=0 ; i < likely_hash.records ; i++)
+  {
+    LIKELY_ENTRY *entry= sort_ptr[i];
+    if (entry->fail > entry->ok)
+      fprintf(likely_file,
+              "%50s  line: %6u  ok: %8lld  fail: %8lld\n",
+              entry->key, entry->line, entry->ok, entry->fail);
+  }
+  fputs("\n", likely_file);
+  fflush(likely_file);
+err:
+  free((void*) sort_ptr);
   if (do_close)
     my_fclose(likely_file, MYF(MY_WME));
   pthread_mutex_destroy(&likely_mutex);
@@ -142,3 +170,4 @@ int my_likely_fail(const char *file_name, uint line)
     entry->fail++;
   return 0;
 }
+#endif /* CHECK_UNLIKEY */
