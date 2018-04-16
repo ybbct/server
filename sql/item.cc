@@ -7904,8 +7904,7 @@ Grouping_tmp_field *find_matching_grouping_field(Item *item,
 }
     
 
-Item *Item_field::derived_grouping_field_transformer_for_where(THD *thd,
-                                                               uchar *arg)
+Item *Item_field::grouping_field_transformer_for_where(THD *thd, uchar *arg)
 {
   st_select_lex *sel= (st_select_lex *)arg;
   Grouping_tmp_field *gr_field= find_matching_grouping_field(this, sel);
@@ -7916,8 +7915,8 @@ Item *Item_field::derived_grouping_field_transformer_for_where(THD *thd,
 
 
 Item *
-Item_direct_view_ref::derived_grouping_field_transformer_for_where(THD *thd,
-                                                                   uchar *arg)
+Item_direct_view_ref::grouping_field_transformer_for_where(THD *thd,
+                                                           uchar *arg)
 {
   if (!item_equal)
     return this;

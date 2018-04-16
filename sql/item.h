@@ -1785,8 +1785,7 @@ public:
   { return this; }
   virtual Item *derived_field_transformer_for_where(THD *thd, uchar *arg)
   { return this; }
-  virtual Item *derived_grouping_field_transformer_for_where(THD *thd,
-                                                             uchar *arg)
+  virtual Item *grouping_field_transformer_for_where(THD *thd, uchar *arg)
   { return this; }
   virtual Item *in_subq_field_transformer_for_having(THD *thd, uchar *arg)
   { return this; }
@@ -2959,7 +2958,7 @@ public:
   virtual Item *update_value_transformer(THD *thd, uchar *select_arg);
   Item *derived_field_transformer_for_having(THD *thd, uchar *arg);
   Item *derived_field_transformer_for_where(THD *thd, uchar *arg);
-  Item *derived_grouping_field_transformer_for_where(THD *thd, uchar *arg);
+  Item *grouping_field_transformer_for_where(THD *thd, uchar *arg);
   Item *in_subq_field_transformer_for_having(THD *thd, uchar *arg);
   virtual void print(String *str, enum_query_type query_type);
   bool excl_dep_on_table(table_map tab_map);
@@ -5091,8 +5090,8 @@ public:
   bool excl_dep_on_in_subq_left_part(Item_in_subselect *subq_pred);
   Item *derived_field_transformer_for_having(THD *thd, uchar *arg);
   Item *derived_field_transformer_for_where(THD *thd, uchar *arg);
-  Item *derived_grouping_field_transformer_for_where(THD *thd,
-                                                     uchar *arg);
+  Item *grouping_field_transformer_for_where(THD *thd, uchar *arg);
+  Item *in_subq_field_transformer_for_having(THD *thd, uchar *arg);
 
   void save_val(Field *to)
   {
@@ -5998,7 +5997,9 @@ public:
   { return convert_to_basic_const_item(thd); }
   Item *derived_field_transformer_for_where(THD *thd, uchar *arg)
   { return convert_to_basic_const_item(thd); }
-  Item *derived_grouping_field_transformer_for_where(THD *thd, uchar *arg)
+  Item *grouping_field_transformer_for_where(THD *thd, uchar *arg)
+  { return convert_to_basic_const_item(thd); }
+  Item *in_subq_field_transformer_for_having(THD *thd, uchar *arg)
   { return convert_to_basic_const_item(thd); }
 };
 

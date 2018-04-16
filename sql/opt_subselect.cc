@@ -5898,7 +5898,6 @@ bool setup_jtbm_semi_joins(JOIN *join, List<TABLE_LIST> *join_list,
   List_iterator<TABLE_LIST> li(*join_list);
   THD *thd= join->thd;
   DBUG_ENTER("setup_jtbm_semi_joins");
-  eq_list.empty();
 
   while ((table= li++))
   {
@@ -6432,14 +6431,39 @@ bool Item_equal::excl_dep_on_in_subq_left_part(Item_in_subselect *subq_pred)
 }
 
 
-Item *Item_field::in_subq_field_transformer_for_having(THD *thd, uchar *arg)
-{
-  Item_in_subselect *subq_pred= (Item_in_subselect *)arg;
+/**
+  @brief
+    Transforms item so it can be pushed into the IN subquery HAVING clause
 
-  List_iterator<In_subq_field> li(subq_pred->comparable_fields);
+  @param thd        the thread handle
+  @param in_item    the item for which pushable item should be created
+  @param subq_pred  the IN subquery predicate
+
+  @details
+    This method traverses the fields of the select of the IN subquery predicate
+    subq_pred trying to find the corresponding item 'new_item' for in_item.
+    If in_item has equal items it traverses the fields of the select of
+    subq_pred for each equal item trying to find corresponding item 'new_item'.
+    If 'new_item' is found, a shell for this item is created. This shell can be
+    pushed into the HAVING part of subq_pred select.
+
+  @retval <item*>  reference to the created corresonding item shell for in_item
+  @retval NULL     if mistake occurs
+*/
+
+static
+Item *get_corresponding_item_for_in_subq_having(THD *thd, Item *in_item,
+                                                Item_in_subselect *subq_pred)
+{
+  DBUG_ASSERT(in_item->type() == Item::FIELD_ITEM ||
+              (in_item->type() == Item::REF_ITEM &&
+              ((Item_ref *) in_item)->ref_type() == Item_ref::VIEW_REF));
+
   In_subq_field *fi;
-  Item_field *field_item= (Item_field *) (real_item());
   Item *new_item;
+  List_iterator<In_subq_field> li(subq_pred->comparable_fields);
+  Item_field *field_item= (Item_field *) (in_item->real_item());
+  Item_equal *item_equal= in_item->get_item_equal();
 
   if (item_equal)
   {
@@ -6452,10 +6476,11 @@ Item *Item_field::in_subq_field_transformer_for_having(THD *thd, uchar *arg)
       while ((fi= li++))
       {
         if (field_item->field ==
-	    ((Item_field *) (fi->left_it->real_item()))->field)
-	{
-	  new_item= fi->right_it;
-	}
+            ((Item_field *) (fi->left_it->real_item()))->field)
+        {
+          new_item= fi->right_it;
+          break;
+        }
       }
     }
   }
@@ -6465,23 +6490,40 @@ Item *Item_field::in_subq_field_transformer_for_having(THD *thd, uchar *arg)
     while ((fi= li++))
     {
       if (field_item->field ==
-	  ((Item_field *) (fi->left_it->real_item()))->field)
+        ((Item_field *) (fi->left_it->real_item()))->field)
+      {
         new_item= fi->right_it;
+        break;
+      }
     }
   }
 
-  if (!new_item)
-    return this;
-
-  Item_ref *ref=
-    new (thd->mem_root) Item_ref(thd,
-				 &subq_pred->unit->first_select()->context,
-                                 NullS, NullS,
-                                 &new_item->name);
+  if (new_item)
+  {
+    Item_ref *ref=
+      new (thd->mem_root) Item_ref(thd,
+                                   &subq_pred->unit->first_select()->context,
+                                   NullS, NullS,
+                                   &new_item->name);
     return ref;
-
+  }
   DBUG_ASSERT(0);
   return NULL;
+}
+
+
+Item *Item_field::in_subq_field_transformer_for_having(THD *thd, uchar *arg)
+{
+  return get_corresponding_item_for_in_subq_having(thd, this,
+                                                   (Item_in_subselect *)arg);
+}
+
+
+Item *Item_direct_view_ref::in_subq_field_transformer_for_having(THD *thd,
+                                                                 uchar *arg)
+{
+  return get_corresponding_item_for_in_subq_having(thd, this,
+                                                   (Item_in_subselect *)arg);
 }
 
 
@@ -6490,14 +6532,14 @@ Item *Item_field::in_subq_field_transformer_for_having(THD *thd, uchar *arg)
     Find fields that are used in the GROUP BY of the select
 
   @param thd     the thread handle
-  @param sel     select of the right part of IN subquery
-  @param fields  fields list of the left part of IN subquery
+  @param sel     the select of the IN subquery predicate select
+  @param fields  fields of the left part of the IN subquery predicate
 
   @details
-    This method looks through the fields which are used in the GROUP BY of
-    sel and saves this fields with their prototypes from the fields list
-    of the left part of IN subquery
+    This method traverses fields which are used in the GROUP BY of
+    sel and saves them with their corresponding items from fields.
 */
+
 void grouping_fields_in_the_in_subq_left_part(THD *thd,
                                               st_select_lex *sel,
                                               List<In_subq_field> *fields,
@@ -6568,6 +6610,7 @@ void grouping_fields_in_the_in_subq_left_part(THD *thd,
   @retval TRUE   if an error occurs
   @retval FALSE  otherwise
 */
+
 bool Item_in_subselect::pushdown_cond_for_in_subquery(THD *thd, Item *cond)
 {
   DBUG_ENTER("Item_in_subselect::pushdown_cond_for_in_subquery");
@@ -6640,12 +6683,12 @@ bool Item_in_subselect::pushdown_cond_for_in_subquery(THD *thd, Item *cond)
 
     if (cond_over_partition_fields)
       cond_over_partition_fields= cond_over_partition_fields->transform(thd,
-           &Item::derived_grouping_field_transformer_for_where, (uchar*) sel);
+        &Item::grouping_field_transformer_for_where, (uchar*) sel);
 
     if (cond_over_partition_fields)
     {
       cond_over_partition_fields->walk(
-	  &Item::cleanup_excluding_const_fields_processor, 0, 0);
+	      &Item::cleanup_excluding_const_fields_processor, 0, 0);
       sel->cond_pushed_into_where= cond_over_partition_fields;
     }
     goto exit;
@@ -6667,9 +6710,10 @@ bool Item_in_subselect::pushdown_cond_for_in_subquery(THD *thd, Item *cond)
     into the sel of the WHERE clause.
   */
   if (cond_over_grouping_fields)
-      cond_over_grouping_fields= cond_over_grouping_fields->transform(thd,
-                           &Item::derived_grouping_field_transformer_for_where,
-                           (uchar*) sel);
+      cond_over_grouping_fields=
+        cond_over_grouping_fields->transform(thd,
+                                   &Item::grouping_field_transformer_for_where,
+                                   (uchar*) sel);
 
   if (cond_over_grouping_fields)
   {
@@ -6695,8 +6739,7 @@ bool Item_in_subselect::pushdown_cond_for_in_subquery(THD *thd, Item *cond)
   if (!extracted_cond)
     goto exit;
 
-  extracted_cond->walk(&Item::cleanup_excluding_const_fields_processor,
-                              0, 0);
+  extracted_cond->walk(&Item::cleanup_excluding_const_fields_processor, 0, 0);
   sel->cond_pushed_into_having= extracted_cond;
 
 exit:

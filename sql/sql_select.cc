@@ -1750,6 +1750,7 @@ JOIN::optimize_inner()
         conds->fix_fields(thd, &conds)))
       DBUG_RETURN(TRUE);
   }
+  eq_list.empty();
 
   if (select_lex->cond_pushed_into_where)
   {

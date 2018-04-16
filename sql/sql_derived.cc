@@ -1310,8 +1310,8 @@ bool pushdown_cond_for_derived(THD *thd, Item *cond, TABLE_LIST *derived)
         sl->build_cond_for_grouping_fields(thd, extracted_cond_copy, true);
       if (cond_over_partition_fields)
         cond_over_partition_fields= cond_over_partition_fields->transform(thd,
-                         &Item::derived_grouping_field_transformer_for_where,
-                         (uchar*) sl);
+                                  &Item::grouping_field_transformer_for_where,
+                                  (uchar*) sl);
       if (cond_over_partition_fields)
       {
         cond_over_partition_fields->walk(
@@ -1364,8 +1364,8 @@ bool pushdown_cond_for_derived(THD *thd, Item *cond, TABLE_LIST *derived)
     */
     if (cond_over_grouping_fields)
       cond_over_grouping_fields= cond_over_grouping_fields->transform(thd,
-                         &Item::derived_grouping_field_transformer_for_where,
-                         (uchar*) sl);
+                              &Item::grouping_field_transformer_for_where,
+                              (uchar*) sl);
      
     if (cond_over_grouping_fields)
     {
