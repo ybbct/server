@@ -14,7 +14,7 @@ Warning	1292	Truncated incorrect DECIMAL value: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE `t1` (
-  `a` bigint(21) DEFAULT NULL
+  `a` bigint(20) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 SET STATEMENT sql_mode = 'NO_ENGINE_SUBSTITUTION' FOR
 CREATE TABLE t2 AS SELECT CONVERT(REPEAT('A', 255) USING UCS2) DIV 1 AS a;
@@ -23,7 +23,7 @@ Warning	1292	Truncated incorrect DECIMAL value: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE `t2` (
-  `a` bigint(21) DEFAULT NULL
+  `a` bigint(20) DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1
 #After the patch, no error is reported.
 connection slave;

@@ -734,6 +734,7 @@ class Item_num_op :public Item_func_numhybrid
     result_precision();
     decimals= 0;
     set_handler(type_handler_long_or_longlong());
+    fix_length_according_to_type_handler();
   }
   void fix_length_and_dec_temporal()
   {
@@ -911,6 +912,7 @@ public:
   void fix_length_and_dec()
   {
     args[0]->type_handler()->Item_func_signed_fix_length_and_dec(this);
+    fix_length_according_to_type_handler();
   }
   virtual void print(String *str, enum_query_type query_type);
   uint decimal_precision() const { return args[0]->decimal_precision(); }
@@ -943,6 +945,7 @@ public:
   void fix_length_and_dec()
   {
     args[0]->type_handler()->Item_func_unsigned_fix_length_and_dec(this);
+    fix_length_according_to_type_handler();
   }
   uint decimal_precision() const { return max_length; }
   virtual void print(String *str, enum_query_type query_type);
@@ -974,6 +977,7 @@ public:
   void fix_length_and_dec()
   {
     args[0]->type_handler()->Item_decimal_typecast_fix_length_and_dec(this);
+    DBUG_ASSERT(max_length <= type_handler()->max_display_length(this));
   }
   const char *func_name() const { return "decimal_typecast"; }
   virtual void print(String *str, enum_query_type query_type);
@@ -1803,7 +1807,11 @@ class Item_func_bit: public Item_longlong_func
 public:
   Item_func_bit(THD *thd, Item *a, Item *b): Item_longlong_func(thd, a, b) {}
   Item_func_bit(THD *thd, Item *a): Item_longlong_func(thd, a) {}
-  void fix_length_and_dec() { unsigned_flag= 1; }
+  void fix_length_and_dec()
+  {
+    unsigned_flag= 1;
+    fix_length_according_to_type_handler();
+  }
 
   virtual inline void print(String *str, enum_query_type query_type)
   {

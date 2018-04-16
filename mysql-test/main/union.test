@@ -1747,5 +1747,265 @@ DROP TABLE t1;
 
 
 --echo #
+--echo # MDEV-13232: Assertion `(&(&share->intern_lock)->m_mutex)->count > 0
+--echo # && pthread_equal(pthread_self(), (&(&share->intern_lock)->m_mutex)->
+--echo # thread)' failed in _ma_state_info_write
+--echo #
+
+CREATE TABLE t1 (c1 CHAR(1));
+ 
+CREATE TABLE t2 (c2 CHAR, d2 decimal(30,10), i2 bigint);
+SET @a= CAST('10' AS CHAR);
+ 
+CREATE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT - @a FROM t2;
+show create table t3;
+CREATE OR REPLACE TABLE t3 AS SELECT d2 FROM t2 UNION SELECT - @a FROM t2;
+show create table t3;
+CREATE OR REPLACE TABLE t3 AS SELECT i2 FROM t2 UNION SELECT - @a FROM t2;
+show create table t3;
+--enable_metadata
+SELECT - @a FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT abs(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT abs(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a+1 FROM t2;
+show create table t3;
+--enable_metadata
+SELECT @a+1 FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a-1 FROM t2;
+show create table t3;
+--enable_metadata
+SELECT @a-1 FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a*1 FROM t2;
+show create table t3;
+--enable_metadata
+SELECT @a*1 FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a/1 FROM t2;
+show create table t3;
+--enable_metadata
+SELECT @a/1 FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT 1/@a FROM t2;
+show create table t3;
+--enable_metadata
+SELECT 1/@a FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT mod(@a,25) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT mod(@a,25) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cast(@a as signed) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT cast(@a as signed) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cast(@a as unsigned) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT cast(@a as unsigned) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cast(@a as double) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT cast(@a as double) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cast(@a as decimal) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT cast(@a as decimal) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a DIV 1 FROM t2;
+show create table t3;
+--enable_metadata
+SELECT @a DIV 1 FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT exp(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT exp(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT ln(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT ln(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT log2(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT log2(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT log10(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT log10(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT log(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT log(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT sqrt(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT sqrt(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT pow(@a,3.5) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT pow(@a,3.5) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT acos(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT acos(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT asin(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT asin(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT atan(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT atan(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cos(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT cos(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT sin(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT sin(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT tan(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT tan(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cot(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT cot(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT ceiling(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT ceiling(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT floor(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT floor(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT round(@a,2) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT round(@a,2) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT rand(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT rand(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT sign(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT sign(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT degrees(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT degrees(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT least(@a,2) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT least(@a,2) FROM t2;
+--disable_metadata
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT greatest(@a,2) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT greatest(@a,2) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT octet_length(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT octet_length(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT bit_length(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT bit_length(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT char_length(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT char_length(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT coercibility(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT coercibility(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT ord(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT ord(@a) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT find_in_set(@a,2) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT find_in_set(@a,2) FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a|1 FROM t2;
+show create table t3;
+--enable_metadata
+SELECT @a|1 FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a&1 FROM t2;
+show create table t3;
+--enable_metadata
+SELECT @a&1 FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a^1 FROM t2;
+show create table t3;
+--enable_metadata
+SELECT @a^1 FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a>>1 FROM t2;
+show create table t3;
+--enable_metadata
+SELECT @a>>1 FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a<<1 FROM t2;
+show create table t3;
+--enable_metadata
+SELECT @a<<1 FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT ~@a FROM t2;
+show create table t3;
+--enable_metadata
+SELECT ~@a FROM t2;
+--disable_metadata
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT bit_count(@a) FROM t2;
+show create table t3;
+--enable_metadata
+SELECT bit_count(@a) FROM t2;
+--disable_metadata
+
+drop table t2,t1;
+drop table t3;
+
+--echo #
 --echo # End of 10.3 tests
 --echo #

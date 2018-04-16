@@ -512,12 +512,12 @@ BIT_LENGTH(10)
 16
 SELECT 1|2, 1&2, 1<<2, 1>>2, ~0, 1^2;
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def					1|2	8	21	1	N	32929	0	63
-def					1&2	8	21	1	N	32929	0	63
-def					1<<2	8	21	1	N	32929	0	63
-def					1>>2	8	21	1	N	32929	0	63
-def					~0	8	21	20	N	32929	0	63
-def					1^2	8	21	1	N	32929	0	63
+def					1|2	8	20	1	N	32929	0	63
+def					1&2	8	20	1	N	32929	0	63
+def					1<<2	8	20	1	N	32929	0	63
+def					1>>2	8	20	1	N	32929	0	63
+def					~0	8	20	20	N	32929	0	63
+def					1^2	8	20	1	N	32929	0	63
 1|2	1&2	1<<2	1>>2	~0	1^2
 3	0	4	0	18446744073709551615	3
 SELECT LAST_INSERT_ID();

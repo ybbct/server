@@ -2500,5 +2500,507 @@ t2	CREATE TABLE `t2` (
 DROP TABLE t2;
 DROP TABLE t1;
 #
+# MDEV-13232: Assertion `(&(&share->intern_lock)->m_mutex)->count > 0
+# && pthread_equal(pthread_self(), (&(&share->intern_lock)->m_mutex)->
+# thread)' failed in _ma_state_info_write
+#
+CREATE TABLE t1 (c1 CHAR(1));
+CREATE TABLE t2 (c2 CHAR, d2 decimal(30,10), i2 bigint);
+SET @a= CAST('10' AS CHAR);
+CREATE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT - @a FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(53) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+CREATE OR REPLACE TABLE t3 AS SELECT d2 FROM t2 UNION SELECT - @a FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `d2` double DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+CREATE OR REPLACE TABLE t3 AS SELECT i2 FROM t2 UNION SELECT - @a FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `i2` double DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT - @a FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					- @a	5	53	0	Y	32896	31	63
+- @a
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT abs(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT abs(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					abs(@a)	5	23	0	Y	32896	31	63
+abs(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a+1 FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT @a+1 FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					@a+1	5	23	0	Y	32896	31	63
+@a+1
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a-1 FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT @a-1 FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					@a-1	5	23	0	Y	32896	31	63
+@a-1
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a*1 FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT @a*1 FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					@a*1	5	23	0	Y	32896	31	63
+@a*1
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a/1 FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT @a/1 FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					@a/1	5	23	0	Y	32896	31	63
+@a/1
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT 1/@a FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT 1/@a FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					1/@a	5	23	0	Y	32896	31	63
+1/@a
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT mod(@a,25) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT mod(@a,25) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					mod(@a,25)	5	23	0	Y	32896	31	63
+mod(@a,25)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cast(@a as signed) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(20) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT cast(@a as signed) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					cast(@a as signed)	8	20	0	Y	32896	0	63
+cast(@a as signed)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cast(@a as unsigned) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(20) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT cast(@a as unsigned) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					cast(@a as unsigned)	8	20	0	Y	32928	0	63
+cast(@a as unsigned)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cast(@a as double) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(22) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT cast(@a as double) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					cast(@a as double)	5	22	0	Y	32896	31	63
+cast(@a as double)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cast(@a as decimal) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(11) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT cast(@a as decimal) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					cast(@a as decimal)	246	11	0	Y	32896	0	63
+cast(@a as decimal)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a DIV 1 FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(20) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT @a DIV 1 FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					@a DIV 1	8	20	0	Y	32896	0	63
+@a DIV 1
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT exp(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT exp(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					exp(@a)	5	23	0	Y	32896	31	63
+exp(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT ln(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT ln(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					ln(@a)	5	23	0	Y	32896	31	63
+ln(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT log2(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT log2(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					log2(@a)	5	23	0	Y	32896	31	63
+log2(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT log10(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT log10(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					log10(@a)	5	23	0	Y	32896	31	63
+log10(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT log(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT log(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					log(@a)	5	23	0	Y	32896	31	63
+log(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT sqrt(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT sqrt(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					sqrt(@a)	5	23	0	Y	32896	31	63
+sqrt(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT pow(@a,3.5) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT pow(@a,3.5) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					pow(@a,3.5)	5	23	0	Y	32896	31	63
+pow(@a,3.5)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT acos(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT acos(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					acos(@a)	5	23	0	Y	32896	31	63
+acos(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT asin(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT asin(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					asin(@a)	5	23	0	Y	32896	31	63
+asin(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT atan(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT atan(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					atan(@a)	5	23	0	Y	32896	31	63
+atan(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cos(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT cos(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					cos(@a)	5	23	0	Y	32896	31	63
+cos(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT sin(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT sin(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					sin(@a)	5	23	0	Y	32896	31	63
+sin(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT tan(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT tan(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					tan(@a)	5	23	0	Y	32896	31	63
+tan(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT cot(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT cot(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					cot(@a)	5	23	0	Y	32896	31	63
+cot(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT ceiling(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(17) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT ceiling(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					ceiling(@a)	5	17	0	Y	32896	0	63
+ceiling(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT floor(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(17) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT floor(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					floor(@a)	5	17	0	Y	32896	0	63
+floor(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT round(@a,2) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(19) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT round(@a,2) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					round(@a,2)	5	19	0	Y	32896	2	63
+round(@a,2)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT rand(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT rand(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					rand(@a)	5	23	0	Y	32896	31	63
+rand(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT sign(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(2) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT sign(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					sign(@a)	3	2	0	Y	32896	0	63
+sign(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT degrees(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT degrees(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					degrees(@a)	5	23	0	Y	32896	31	63
+degrees(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT least(@a,2) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT least(@a,2) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					least(@a,2)	5	23	0	Y	32896	31	63
+least(@a,2)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT greatest(@a,2) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(23) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT greatest(@a,2) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					greatest(@a,2)	5	23	0	Y	32896	31	63
+greatest(@a,2)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT octet_length(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(10) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT octet_length(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					octet_length(@a)	3	10	0	Y	32896	0	63
+octet_length(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT bit_length(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(11) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT bit_length(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					bit_length(@a)	8	11	0	Y	32896	0	63
+bit_length(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT char_length(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(10) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT char_length(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					char_length(@a)	3	10	0	Y	32896	0	63
+char_length(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT coercibility(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(10) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT coercibility(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					coercibility(@a)	3	10	0	N	32897	0	63
+coercibility(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT ord(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(7) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT ord(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					ord(@a)	3	7	0	Y	32896	0	63
+ord(@a)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT find_in_set(@a,2) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(3) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT find_in_set(@a,2) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					find_in_set(@a,2)	3	3	0	Y	32896	0	63
+find_in_set(@a,2)
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a|1 FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(20) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT @a|1 FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					@a|1	8	20	0	Y	32928	0	63
+@a|1
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a&1 FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(20) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT @a&1 FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					@a&1	8	20	0	Y	32928	0	63
+@a&1
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a^1 FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(20) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT @a^1 FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					@a^1	8	20	0	Y	32928	0	63
+@a^1
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a>>1 FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(20) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT @a>>1 FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					@a>>1	8	20	0	Y	32928	0	63
+@a>>1
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT @a<<1 FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(20) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT @a<<1 FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					@a<<1	8	20	0	Y	32928	0	63
+@a<<1
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT ~@a FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(20) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT ~@a FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					~@a	8	20	0	Y	32928	0	63
+~@a
+CREATE OR REPLACE TABLE t3 AS SELECT c1 FROM t1 UNION SELECT bit_count(@a) FROM t2;
+show create table t3;
+Table	Create Table
+t3	CREATE TABLE `t3` (
+  `c1` char(2) DEFAULT NULL
+) ENGINE=MyISAM DEFAULT CHARSET=latin1
+SELECT bit_count(@a) FROM t2;
+Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
+def					bit_count(@a)	3	2	0	Y	32896	0	63
+bit_count(@a)
+drop table t2,t1;
+drop table t3;
+#
 # End of 10.3 tests
 #

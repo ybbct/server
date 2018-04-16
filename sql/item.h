@@ -2023,6 +2023,11 @@ public:
   {
     marker &= ~EXTRACTION_MASK;
   }
+  void fix_length_according_to_type_handler()
+  {
+    uint32 mlen= type_handler()->max_display_length(this);
+    set_if_smaller(max_length, mlen);
+  }
 };
 
 MEM_ROOT *get_thd_memroot(THD *thd);

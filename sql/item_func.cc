@@ -802,6 +802,7 @@ void Item_func_plus::fix_length_and_dec(void)
     Item_func_plus::type_handler()->Item_func_plus_fix_length_and_dec(this);
     DBUG_PRINT("info", ("Type: %s", type_handler()->name().ptr()));
   }
+  DBUG_ASSERT(max_length <= type_handler()->max_display_length(this));
   DBUG_VOID_RETURN;
 }
 
@@ -1328,6 +1329,7 @@ void Item_func_minus::fix_length_and_dec()
     Item_func_minus::type_handler()->Item_func_minus_fix_length_and_dec(this);
     DBUG_PRINT("info", ("Type: %s", type_handler()->name().ptr()));
   }
+  fix_length_according_to_type_handler();
   DBUG_VOID_RETURN;
 }
 
@@ -1560,6 +1562,7 @@ void Item_func_mul::fix_length_and_dec(void)
     Item_func_mul::type_handler()->Item_func_mul_fix_length_and_dec(this);
     DBUG_PRINT("info", ("Type: %s", type_handler()->name().ptr()));
   }
+  DBUG_ASSERT(max_length <= type_handler()->max_display_length(this));
   DBUG_VOID_RETURN;
 }
 
@@ -1670,6 +1673,7 @@ void Item_func_div::fix_length_and_dec(void)
     Item_func_div::type_handler()->Item_func_div_fix_length_and_dec(this);
     DBUG_PRINT("info", ("Type: %s", type_handler()->name().ptr()));
   }
+  DBUG_ASSERT(max_length <= type_handler()->max_display_length(this));
   DBUG_VOID_RETURN;
 }
 
@@ -1757,6 +1761,7 @@ void Item_func_int_div::fix_length_and_dec()
                   MY_INT64_NUM_DECIMAL_DIGITS : char_length);
   maybe_null=1;
   unsigned_flag=args[0]->unsigned_flag | args[1]->unsigned_flag;
+  fix_length_according_to_type_handler();
 }
 
 
@@ -1854,6 +1859,7 @@ void Item_func_mod::fix_length_and_dec()
     DBUG_PRINT("info", ("Type: %s", type_handler()->name().ptr()));
   }
   DBUG_VOID_RETURN;
+  DBUG_ASSERT(max_length <= type_handler()->max_display_length(this));
 }
 
 
@@ -1954,6 +1960,9 @@ void Item_func_neg::fix_length_and_dec()
   DBUG_PRINT("info", ("name %s", func_name()));
   args[0]->cast_to_int_type_handler()->Item_func_neg_fix_length_and_dec(this);
   DBUG_PRINT("info", ("Type: %s", type_handler()->name().ptr()));
+
+  // limit length with some realistic figures for double
+  fix_length_according_to_type_handler();
   DBUG_VOID_RETURN;
 }
 
@@ -2026,6 +2035,7 @@ void Item_func_abs::fix_length_and_dec()
   DBUG_PRINT("info", ("name %s", func_name()));
   args[0]->cast_to_int_type_handler()->Item_func_abs_fix_length_and_dec(this);
   DBUG_PRINT("info", ("Type: %s", type_handler()->name().ptr()));
+  fix_length_according_to_type_handler();
   DBUG_VOID_RETURN;
 }
 
@@ -2299,6 +2309,7 @@ void Item_func_int_val::fix_length_and_dec()
   args[0]->cast_to_int_type_handler()->
     Item_func_int_val_fix_length_and_dec(this);
   DBUG_PRINT("info", ("Type: %s", type_handler()->name().ptr()));
+  DBUG_ASSERT(max_length <= type_handler()->max_display_length(this));
   DBUG_VOID_RETURN;
 }
 
@@ -3044,6 +3055,7 @@ void Item_func_field::fix_length_and_dec()
     cmp_type= item_cmp_type(cmp_type, args[i]->result_type());
   if (cmp_type == STRING_RESULT)
     agg_arg_charsets_for_comparison(cmp_collation, args, arg_count);
+  DBUG_ASSERT(max_length <= type_handler()->max_display_length(this));
 }
 
 
@@ -3113,6 +3125,7 @@ void Item_func_find_in_set::fix_length_and_dec()
     }
   }
   agg_arg_charsets_for_comparison(cmp_collation, args, 2);
+  DBUG_ASSERT(max_length <= type_handler()->max_display_length(this));
 }
 
 static const char separator=',';
